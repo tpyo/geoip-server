@@ -1,0 +1,19 @@
+[package]
+name = "geoip-server"
+version = "0.1.0"
+authors = ["Donovan Schönknecht <don@tpyo.net>"]
+
+[dependencies]
+tokio-io = "*"
+tokio-core = "*"
+tokio-proto = "*"
+tokio-service = "*"
+futures = "*"
+futures-cpupool = "*"
+serde = "*"
+serde_derive = "*"
+serde_json = "*"
+maxminddb = "*"
+
+[dependencies.tokio-minihttp]
+git = "https://github.com/tokio-rs/tokio-minihttp"
