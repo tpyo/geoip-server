@@ -4,16 +4,17 @@ version = "0.1.0"
 authors = ["Donovan Schönknecht <don@tpyo.net>"]
 
 [dependencies]
-tokio-io = "*"
-tokio-core = "*"
-tokio-proto = "*"
-tokio-service = "*"
-futures = "*"
-futures-cpupool = "*"
-serde = "*"
-serde_derive = "*"
-serde_json = "*"
-maxminddb = "*"
+tokio-io = "0.1.2"
+tokio-core = "0.1.7"
+tokio-proto = "0.1.1"
+tokio-service = "0.1.0"
+futures = "0.1.14"
+futures-cpupool = "0.1.5"
+serde = "1.0.8"
+serde_derive = "1.0.8"
+serde_json = "1.0.2"
+maxminddb = "0.7.2"
+num_cpus = "1.5.0"
 
 [dependencies.tokio-minihttp]
 git = "https://github.com/tokio-rs/tokio-minihttp"
