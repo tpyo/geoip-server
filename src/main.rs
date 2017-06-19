@@ -8,6 +8,7 @@ extern crate serde_json;
 extern crate tokio_minihttp;
 extern crate tokio_proto;
 extern crate tokio_service;
+extern crate num_cpus;
 
 use std::sync::Arc;
 use std::io;
@@ -169,8 +170,8 @@ fn main() {
         }
     };
 
-	let db = Arc::new(reader);
-    let thread_pool = CpuPool::new(8);
+    let db = Arc::new(reader);
+    let thread_pool = CpuPool::new(num_cpus::get());
     TcpServer::new(tokio_minihttp::Http, addr).serve(move || {
         Ok(Server {
             thread_pool: thread_pool.clone(),
