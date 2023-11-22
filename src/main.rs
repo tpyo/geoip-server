@@ -92,6 +92,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use http_body_util::BodyExt;
     use tokio_test::assert_ok;
 
     async fn mock_handle_request(ip: &str) -> Result<Response<Full<Bytes>>, Error> {
@@ -104,9 +105,12 @@ mod tests {
         let ip = "89.160.20.128";
         let response = mock_handle_request(ip).await;
         assert_ok!(&response);
-        let data = response.unwrap();
+        let mut data = response.unwrap();
         assert_eq!(data.headers().get(CONTENT_TYPE).unwrap(), "application/json");
         assert_eq!(data.status(), StatusCode::OK);
+        let body = data.frame().await.unwrap().unwrap().into_data().unwrap();
+        let json = serde_json::from_slice::<serde_json::Value>(&body).unwrap();
+        assert_eq!(json["city"]["names"]["en"], "Linköping");
     }
 
     #[tokio::test]
@@ -121,7 +125,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_handle_request_with_invalid_ip() {
-        let ip = "invalid-ip"; // Example of an invalid IP
+        let ip = "invalid-ip";
         let response = mock_handle_request(ip).await;
         assert_ok!(&response);
         let data = response.unwrap();
