@@ -6,11 +6,12 @@ use hyper::{service::service_fn, Response};
 use hyper::header::CONTENT_TYPE;
 use hyper::StatusCode;
 use hyper_util::rt::TokioIo;
-use maxminddb::geoip2;
+use maxminddb::{geoip2, Mmap};
 use std::net::{IpAddr, SocketAddr, ToSocketAddrs};
 use std::sync::Arc;
 use std::env;
 use tokio::net::TcpListener;
+
 
 fn parse_args() -> Result<(SocketAddr, String), Box<dyn std::error::Error>> {
     let args: Vec<String> = env::args().collect();
@@ -27,7 +28,7 @@ fn parse_args() -> Result<(SocketAddr, String), Box<dyn std::error::Error>> {
     Ok((addr, mmdb_file))
 }
 
-async fn run_server(listener: TcpListener, db: Arc<maxminddb::Reader<Vec<u8>>>) -> Result<(), Box<dyn std::error::Error>> {
+async fn run_server(listener: TcpListener, db: Arc<maxminddb::Reader<Mmap>>) -> Result<(), Box<dyn std::error::Error>> {
     println!("Listening on http://{}", listener.local_addr()?);
     loop {
         let (stream, _) = listener.accept().await?;
@@ -49,7 +50,7 @@ async fn run_server(listener: TcpListener, db: Arc<maxminddb::Reader<Vec<u8>>>) 
     }
 }
 
-async fn handle_request(ip: &str, db: Arc<maxminddb::Reader<Vec<u8>>>) -> Result<Response<Full<Bytes>>, Error> {
+async fn handle_request(ip: &str, db: Arc<maxminddb::Reader<Mmap>>) -> Result<Response<Full<Bytes>>, Error> {
     let body: Full<Bytes>;
     let status: StatusCode;
 
@@ -82,7 +83,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let listener = TcpListener::bind(addr).await?;
 
-    let db = Arc::new(maxminddb::Reader::open_readfile(mmdb_file)?);
+    let db = Arc::new(maxminddb::Reader::open_mmap(mmdb_file)?);
 
     run_server(listener, db).await?;
 
@@ -96,7 +97,7 @@ mod tests {
     use tokio_test::assert_ok;
 
     async fn mock_handle_request(ip: &str) -> Result<Response<Full<Bytes>>, Error> {
-        let db = Arc::new(maxminddb::Reader::open_readfile("MaxMind-DB/test-data/GeoIP2-City-Test.mmdb").unwrap());
+        let db = Arc::new(maxminddb::Reader::open_mmap("MaxMind-DB/test-data/GeoIP2-City-Test.mmdb").unwrap());
         handle_request(&ip, db).await
     }
 
