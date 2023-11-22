@@ -92,3 +92,13 @@ Example response:
 }
 ```
 
+### Docker usage
+
+Copy your MMDB file to the project root and build the docker image:
+
+```sh
+cp /path/to/GeoIP2-City.mmdb .
+
+docker build -t geoip-server .
+```
+
