@@ -35,18 +35,21 @@ async fn run_server(listener: TcpListener, db: Arc<maxminddb::Reader<Mmap>>) -> 
         let io = TokioIo::new(stream);
         let db = db.clone();
 
-        let service = service_fn(move |req| {
-            let db = db.clone();
-            let ip = req.uri().path().trim_start_matches('/').to_string();
+        tokio::spawn(async move {
+            let service = service_fn(move |req| {
+                let db = db.clone();
+                let ip = req.uri().path().trim_start_matches('/').to_string();
 
-            async move {
-                handle_request(&ip, db).await
+                async move {
+                    handle_request(&ip, db).await
+                }
+            });
+
+
+            if let Err(err) = http1::Builder::new().serve_connection(io, service).await {
+                println!("Error serving connection: {:?}", err);
             }
         });
-
-        if let Err(err) = http1::Builder::new().serve_connection(io, service).await {
-            println!("Error serving connection: {:?}", err);
-        }
     }
 }
 
