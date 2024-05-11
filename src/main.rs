@@ -38,13 +38,19 @@ async fn run_server(listener: TcpListener, db: Arc<maxminddb::Reader<Mmap>>) -> 
         tokio::spawn(async move {
             let service = service_fn(move |req| {
                 let db = db.clone();
-                let ip = req.uri().path().trim_start_matches('/').to_string();
+                let path = req.uri().path().trim_start_matches('/').to_string();
 
                 async move {
-                    handle_request(&ip, db).await
+                    match path.as_str() {
+                        "healthz" => {
+                            handle_healthcheck().await
+                        },
+                        _ => {
+                            handle_request(&path, db).await
+                        }
+                    }
                 }
             });
-
 
             if let Err(err) = http1::Builder::new().serve_connection(io, service).await {
                 println!("Error serving connection: {:?}", err);
@@ -53,11 +59,17 @@ async fn run_server(listener: TcpListener, db: Arc<maxminddb::Reader<Mmap>>) -> 
     }
 }
 
-async fn handle_request(ip: &str, db: Arc<maxminddb::Reader<Mmap>>) -> Result<Response<Full<Bytes>>, Error> {
+async fn handle_healthcheck() -> Result<Response<Full<Bytes>>, Error> {
+    Ok(Response::builder()
+    .status(StatusCode::OK)
+    .body(Full::new(Bytes::from("{\"status\": \"healthy\"}"))).unwrap())
+}
+
+async fn handle_request(path: &str, db: Arc<maxminddb::Reader<Mmap>>) -> Result<Response<Full<Bytes>>, Error> {
     let body: Full<Bytes>;
     let status: StatusCode;
 
-    if let Ok(ipaddr) = ip.parse::<IpAddr>() {
+    if let Ok(ipaddr) = path.parse::<IpAddr>() {
         let entry: Option<geoip2::City> = db.lookup(ipaddr).ok();
         status = match entry {
             Some(_) => StatusCode::OK,
@@ -101,7 +113,7 @@ mod tests {
 
     async fn mock_handle_request(ip: &str) -> Result<Response<Full<Bytes>>, Error> {
         let db = Arc::new(maxminddb::Reader::open_mmap("MaxMind-DB/test-data/GeoIP2-City-Test.mmdb").unwrap());
-        handle_request(&ip, db).await
+        handle_request(ip, db).await
     }
 
     #[tokio::test]
