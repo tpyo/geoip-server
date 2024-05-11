@@ -113,7 +113,7 @@ mod tests {
 
     async fn mock_handle_request(ip: &str) -> Result<Response<Full<Bytes>>, Error> {
         let db = Arc::new(maxminddb::Reader::open_mmap("MaxMind-DB/test-data/GeoIP2-City-Test.mmdb").unwrap());
-        handle_request(&ip, db).await
+        handle_request(ip, db).await
     }
 
     #[tokio::test]
