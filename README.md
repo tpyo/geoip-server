@@ -1,7 +1,7 @@
 # geoip-server
 [![Build](https://github.com/tpyo/geoip-server/actions/workflows/build.yml/badge.svg)](https://github.com/tpyo/geoip-server/actions/workflows/build.yml)
 
-Fast, lightweight MaxMind GeoIP lookup server written in Rust (experimental)
+Fast, lightweight MaxMind GeoIP lookup server written in Rust
 
 ### Starting the server
 Usage: `./geoip-server localhost:3000 MaxMind-DB/test-data/GeoIP2-City-Test.mmdb`

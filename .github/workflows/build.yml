@@ -7,6 +7,8 @@ concurrency:
 on:
   push:
     branches: [main, master, production]
+    paths-ignore:
+      - '**/README.md'
 
 env:
   CARGO_TERM_COLOR: always
