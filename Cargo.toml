@@ -7,7 +7,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-http-body-util = "0.1.0"
+http-body-util = "0.1.2"
 hyper = { version = "1.6.0", default-features = false, features = ["http1", "http2", "server"] }
 hyper-util = { version = "0.1.10", default-features = false, features = ["http1", "http2", "tokio"] }
 maxminddb = { version = "0.25.0", features = ["mmap"] }
