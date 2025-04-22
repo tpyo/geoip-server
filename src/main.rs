@@ -70,17 +70,33 @@ async fn handle_request(path: &str, db: Arc<maxminddb::Reader<Mmap>>) -> Result<
     let status: StatusCode;
 
     if let Ok(ipaddr) = path.parse::<IpAddr>() {
-        let entry: Option<geoip2::City> = db.lookup(ipaddr).ok();
-        status = match entry {
-            Some(_) => StatusCode::OK,
-            None => StatusCode::NOT_FOUND
-        };
-        body = match entry {
-            Some(result) => Full::new(Bytes::from(
-                serde_json::to_string(&result).unwrap().to_string(),
-            )),
-            None => Full::new(Bytes::from("{\"error\": \"not_found\"}"))
-        };
+        match db.lookup::<geoip2::City>(ipaddr) {
+            Ok(lookup) => {
+                match lookup {
+                    Some(_) => {
+                        status = StatusCode::OK;
+                        body = Full::new(Bytes::from(
+                            serde_json::to_string(&lookup).unwrap().to_string(),
+                        ));
+                    },
+                    None => {
+                        return Ok(Response::builder()
+                            .status(StatusCode::NOT_FOUND)
+                            .body(Full::new(Bytes::from("{\"error\": \"not_found\"}"))).unwrap());
+                    }
+                }
+                if lookup.is_none() {
+                    return Ok(Response::builder()
+                        .status(StatusCode::NOT_FOUND)
+                        .body(Full::new(Bytes::from("{\"error\": \"not_found\"}"))).unwrap());
+                }
+            },
+            Err(_) => {
+                return Ok(Response::builder()
+                    .status(StatusCode::INTERNAL_SERVER_ERROR)
+                    .body(Full::new(Bytes::from("{\"error\": \"internal_error\"}"))).unwrap());
+            }
+        }
     } else {
         status = StatusCode::BAD_REQUEST;
         body = Full::new(Bytes::from("{\"error\": \"invalid_ip\"}"))
