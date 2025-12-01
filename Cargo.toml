@@ -9,15 +9,15 @@ rust-version = "1.89.0"
 
 [dependencies]
 http-body-util = "0.1.2"
-hyper = { version = "1.6.0", default-features = false, features = ["http1", "http2", "server"] }
-hyper-util = { version = "0.1.10", default-features = false, features = ["http1", "http2", "tokio"] }
+hyper = { version = "1.8.1", default-features = false, features = ["http1", "http2", "server"] }
+hyper-util = { version = "0.1.18", default-features = false, features = ["http1", "http2", "tokio"] }
 maxminddb = { version = "0.27.0", features = ["mmap"] }
-serde = "1.0.217"
-serde_json = "1.0.138"
+serde = "1.0.228"
+serde_json = "1.0.145"
 tokio = { version = "1.48.0", default-features = false, features = ["rt", "rt-multi-thread", "macros", "net"] }
 
 [dev-dependencies]
-tokio-test = "0.4.3"
+tokio-test = "0.4.4"
 
 [[bin]]
 name = "geoip-server"
