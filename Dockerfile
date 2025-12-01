@@ -1,4 +1,4 @@
-FROM rust:1-alpine3.17 as builder
+FROM rust:1.91.1-alpine3.22 as builder
 RUN apk add --no-cache musl-dev pkgconf git
 
 WORKDIR /build
