@@ -66,25 +66,26 @@ async fn handle_healthcheck() -> Result<Response<Full<Bytes>>, Error> {
 }
 
 async fn handle_request(path: &str, db: Arc<maxminddb::Reader<Mmap>>) -> Result<Response<Full<Bytes>>, Error> {
-    let mut body: Full<Bytes>;
-    let mut status: StatusCode;
+    let body: Full<Bytes>;
+    let status: StatusCode;
 
     if let Ok(ipaddr) = path.parse::<IpAddr>() {
-        match db.lookup::<geoip2::City>(ipaddr) {
-            Ok(lookup) => {
-                match lookup {
-                    Some(_) => {
-                        status = StatusCode::OK;
-                        body = Full::new(Bytes::from(
-                            serde_json::to_string(&lookup).unwrap().to_string(),
-                        ));
-                    },
-                    None => {
-                        status = StatusCode::NOT_FOUND;
-                        body = Full::new(Bytes::from("{\"error\": \"not_found\"}"));
+        match db.lookup(ipaddr) {
+            Ok(lookup_result) => {
+                if lookup_result.has_data() {
+                    match lookup_result.decode::<geoip2::City>() {
+                        Ok(city) => {
+                            status = StatusCode::OK;
+                            body = Full::new(Bytes::from(
+                                serde_json::to_string(&city).unwrap().to_string(),
+                            ));
+                        },
+                        Err(_) => {
+                            status = StatusCode::INTERNAL_SERVER_ERROR;
+                            body = Full::new(Bytes::from("{\"error\": \"internal_error\"}"));
+                        }
                     }
-                }
-                if lookup.is_none() {
+                } else {
                     status = StatusCode::NOT_FOUND;
                     body = Full::new(Bytes::from("{\"error\": \"not_found\"}"));
                 }
@@ -111,7 +112,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let listener = TcpListener::bind(addr).await?;
 
-    let db = Arc::new(maxminddb::Reader::open_mmap(mmdb_file)?);
+    // SAFETY: We assume the mmdb file will not be modified while the server is running.
+    // This is a reasonable assumption for production usage where the database file is
+    // updated atomically (e.g., by replacing the entire file).
+    let db = unsafe { Arc::new(maxminddb::Reader::open_mmap(mmdb_file)?) };
 
     run_server(listener, db).await?;
 
@@ -125,7 +129,8 @@ mod tests {
     use tokio_test::assert_ok;
 
     async fn mock_handle_request(ip: &str) -> Result<Response<Full<Bytes>>, Error> {
-        let db = Arc::new(maxminddb::Reader::open_mmap("MaxMind-DB/test-data/GeoIP2-City-Test.mmdb").unwrap());
+        // SAFETY: Test database file is read-only and won't be modified during the test.
+        let db = unsafe { Arc::new(maxminddb::Reader::open_mmap("MaxMind-DB/test-data/GeoIP2-City-Test.mmdb").unwrap()) };
         handle_request(ip, db).await
     }
 
