@@ -2,7 +2,8 @@
 name = "geoip-server"
 version = "0.1.0"
 authors = ["Donovan Schönknecht <don@tpyo.net>"]
-edition = "2021"
+edition = "2024"
+rust-version = "1.89.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
